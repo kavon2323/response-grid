@@ -89,6 +89,9 @@ export default async function IncidentsPage() {
                 Incident
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Area
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Location
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -108,7 +111,7 @@ export default async function IncidentsPage() {
           <tbody className="bg-white divide-y divide-gray-200">
             {(!incidents || incidents.length === 0) ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <AlertCircle className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                   <p className="text-gray-500">No incidents found</p>
                 </td>
@@ -125,8 +128,17 @@ export default async function IncidentsPage() {
                     </Link>
                     {incident.cad_incident_id && (
                       <p className="text-xs text-gray-500">
-                        CAD #{incident.cad_incident_id}
+                        #{incident.cad_incident_id}
                       </p>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {incident.response_area ? (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                        {incident.response_area}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">--</span>
                     )}
                   </td>
                   <td className="px-6 py-4">

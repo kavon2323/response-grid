@@ -140,22 +140,91 @@ export default async function IncidentDetailPage({
             </div>
           </div>
 
-          {/* Description */}
-          {incident.description && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-fire-600" />
-                Description
-              </h2>
-              <p className="text-gray-700">{incident.description}</p>
-              {incident.dispatch_notes && (
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                  <p className="text-sm font-medium text-yellow-800">Dispatch Notes</p>
-                  <p className="text-sm text-yellow-700">{incident.dispatch_notes}</p>
+          {/* Description & CAD Details */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-fire-600" />
+              Incident Details
+            </h2>
+
+            {incident.response_area && (
+              <div className="mb-3">
+                <span className="text-sm font-medium text-gray-500">Response Area:</span>
+                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-medium">
+                  {incident.response_area}
+                </span>
+              </div>
+            )}
+
+            {incident.description && (
+              <p className="text-gray-700 mb-4">{incident.description}</p>
+            )}
+
+            {incident.caller_statement && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-sm font-medium text-blue-800">Caller Statement</p>
+                <p className="text-sm text-blue-700">{incident.caller_statement}</p>
+              </div>
+            )}
+
+            {incident.responding_to && (
+              <div className="mb-4">
+                <p className="text-sm font-medium text-gray-500">Responding To</p>
+                <p className="text-gray-700">{incident.responding_to}</p>
+              </div>
+            )}
+
+            {incident.determined && (
+              <div className="mb-4">
+                <p className="text-sm font-medium text-gray-500">Determined</p>
+                <p className="text-gray-700">{incident.determined}</p>
+              </div>
+            )}
+
+            {incident.remarks && (
+              <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
+                <p className="text-sm font-medium text-gray-600">Remarks</p>
+                <p className="text-sm text-gray-700">{incident.remarks}</p>
+              </div>
+            )}
+
+            {incident.dispatch_notes && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-sm font-medium text-yellow-800">Dispatch Notes</p>
+                <p className="text-sm text-yellow-700">{incident.dispatch_notes}</p>
+              </div>
+            )}
+
+            {incident.resources_assigned && incident.resources_assigned.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-500 mb-2">Resources Assigned</p>
+                <div className="flex flex-wrap gap-2">
+                  {incident.resources_assigned.map((resource: string, index: number) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm"
+                    >
+                      {resource}
+                    </span>
+                  ))}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+
+            {incident.google_maps_url && (
+              <div className="mt-4">
+                <a
+                  href={incident.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-fire-600 hover:text-fire-700"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Open in Google Maps
+                </a>
+              </div>
+            )}
+          </div>
 
           {/* Responders */}
           <div className="bg-white rounded-lg shadow p-6">

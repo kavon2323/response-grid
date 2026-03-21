@@ -167,6 +167,16 @@ export interface Incident {
   caller_name: string | null;
   caller_phone: string | null;
   dispatch_notes: string | null;
+  // CAD Page specific fields
+  response_area: string | null;
+  resources_assigned: string[];
+  remarks: string | null;
+  responding_to: string | null;
+  determined: string | null;
+  caller_statement: string | null;
+  google_maps_url: string | null;
+  raw_cad_text: string | null;
+  // Timestamps
   dispatched_at: string;
   acknowledged_at: string | null;
   first_unit_enroute_at: string | null;
