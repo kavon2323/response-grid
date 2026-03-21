@@ -1,0 +1,28 @@
+{
+  "name": "fireresponse-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start --workspace=@fireresponse/mobile",
+    "mobile:ios": "npm run ios --workspace=@fireresponse/mobile",
+    "mobile:android": "npm run android --workspace=@fireresponse/mobile",
+    "admin": "npm run dev --workspace=@fireresponse/admin",
+    "admin:build": "npm run build --workspace=@fireresponse/admin",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > packages/shared/src/lib/database.types.ts",
+    "functions:serve": "supabase functions serve",
+    "functions:deploy": "supabase functions deploy",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "devDependencies": {
+    "supabase": "^1.130.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
