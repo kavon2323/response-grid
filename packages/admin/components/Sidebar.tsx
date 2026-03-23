@@ -11,12 +11,16 @@ import {
   BarChart3,
   Settings,
   Map,
+  Calendar,
+  Megaphone,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Live Map', href: '/map', icon: Map },
   { name: 'Incidents', href: '/incidents', icon: AlertCircle },
+  { name: 'Calendar', href: '/calendar', icon: Calendar },
+  { name: 'Announcements', href: '/announcements', icon: Megaphone },
   { name: 'Members', href: '/members', icon: Users },
   { name: 'Apparatus', href: '/apparatus', icon: Truck },
   { name: 'Equipment', href: '/equipment', icon: Package },

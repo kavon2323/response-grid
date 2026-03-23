@@ -26,7 +26,14 @@ export function AddMemberModal({ isOpen, onClose, onSuccess, stations, departmen
     setIsLoading(true);
     setError(null);
 
+    if (!departmentId) {
+      setError('No department configured. Please contact an administrator.');
+      setIsLoading(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
+    const stationValue = formData.get('station') as string;
 
     const { error: insertError } = await supabase.from('users').insert({
       first_name: formData.get('first_name'),
@@ -35,7 +42,7 @@ export function AddMemberModal({ isOpen, onClose, onSuccess, stations, departmen
       phone: formData.get('phone') || null,
       badge_number: formData.get('badge_number') || null,
       role: formData.get('role'),
-      primary_station_id: formData.get('station') || null,
+      primary_station_id: stationValue && stationValue !== '' ? stationValue : null,
       is_active: true,
       department_id: departmentId,
     });

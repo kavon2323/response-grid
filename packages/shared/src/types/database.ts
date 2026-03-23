@@ -60,6 +60,80 @@ export type EquipmentStatus =
 
 export type CadSourceType = 'webhook' | 'email' | 'api_poll' | 'manual';
 
+export type MaintenanceType = 'scheduled' | 'repair' | 'inspection' | 'recall';
+
+export type MaintenanceStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+
+export type CheckType = 'daily' | 'weekly' | 'monthly' | 'annual';
+
+export type CheckStatus = 'passed' | 'failed' | 'needs_attention';
+
+export type IssueSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'deferred';
+
+// Training Management Types
+export type TrainingCategory =
+  | 'fire'
+  | 'ems'
+  | 'hazmat'
+  | 'leadership'
+  | 'rescue'
+  | 'driver'
+  | 'safety'
+  | 'communications'
+  | 'other';
+
+export type TrainingType =
+  | 'classroom'
+  | 'practical'
+  | 'online'
+  | 'drill'
+  | 'exercise'
+  | 'conference'
+  | 'self_study';
+
+export type CertificationStatus =
+  | 'active'
+  | 'expired'
+  | 'pending_renewal'
+  | 'revoked'
+  | 'pending';
+
+export type EventType =
+  | 'training'
+  | 'meeting'
+  | 'drill'
+  | 'maintenance'
+  | 'inspection'
+  | 'community'
+  | 'other';
+
+export type AttendanceStatus =
+  | 'registered'
+  | 'attended'
+  | 'absent'
+  | 'excused'
+  | 'cancelled';
+
+// Calendar/Scheduling Types
+export type DepartmentEventType =
+  | 'meeting'
+  | 'training'
+  | 'drill'
+  | 'maintenance'
+  | 'social'
+  | 'other';
+
+export type EventRecurring = 'none' | 'daily' | 'weekly' | 'monthly';
+
+export type RsvpStatus = 'yes' | 'no' | 'maybe';
+
+// Messaging Types
+export type AnnouncementPriority = 'normal' | 'important' | 'urgent';
+
+export type MessageTargetType = 'all' | 'role' | 'station' | 'custom';
+
 // ============================================================================
 // DATABASE TABLES
 // ============================================================================
@@ -335,6 +409,79 @@ export interface AuditLog {
   created_at: string;
 }
 
+export interface MaintenancePart {
+  name: string;
+  quantity: number;
+  cost: number | null;
+  part_number: string | null;
+}
+
+export interface ApparatusMaintenance {
+  id: string;
+  apparatus_id: string;
+  department_id: string;
+  maintenance_type: MaintenanceType;
+  title: string;
+  description: string | null;
+  performed_by: string | null;
+  vendor: string | null;
+  cost: number | null;
+  odometer_reading: number | null;
+  engine_hours: number | null;
+  scheduled_date: string | null;
+  completed_date: string | null;
+  next_due_date: string | null;
+  status: MaintenanceStatus;
+  parts_used: MaintenancePart[];
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChecklistItem {
+  item: string;
+  passed: boolean;
+  notes: string | null;
+}
+
+export interface CheckIssue {
+  description: string;
+  severity: IssueSeverity;
+  photo_url: string | null;
+}
+
+export interface ApparatusCheck {
+  id: string;
+  apparatus_id: string;
+  department_id: string;
+  check_type: CheckType;
+  performed_by_user_id: string;
+  check_date: string;
+  odometer_reading: number | null;
+  fuel_level: number | null;
+  status: CheckStatus;
+  checklist_items: ChecklistItem[];
+  overall_notes: string | null;
+  issues_found: CheckIssue[];
+  created_at: string;
+}
+
+export interface ApparatusIssue {
+  id: string;
+  apparatus_id: string;
+  department_id: string;
+  reported_by_user_id: string;
+  title: string;
+  description: string | null;
+  severity: IssueSeverity;
+  status: IssueStatus;
+  resolution_notes: string | null;
+  resolved_at: string | null;
+  resolved_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface NotificationLog {
   id: string;
   user_id: string;
@@ -347,6 +494,157 @@ export interface NotificationLog {
   delivered: boolean | null;
   delivery_error: string | null;
   sent_at: string;
+}
+
+// ============================================================================
+// TRAINING MANAGEMENT TABLES
+// ============================================================================
+
+export interface TrainingCourse {
+  id: string;
+  department_id: string;
+  name: string;
+  description: string | null;
+  category: TrainingCategory;
+  required_for_roles: UserRole[];
+  certification_required: boolean;
+  hours: number | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TrainingAttachment {
+  name: string;
+  url: string;
+  type: string;
+}
+
+export interface TrainingRecord {
+  id: string;
+  department_id: string;
+  user_id: string;
+  course_id: string | null;
+  title: string;
+  description: string | null;
+  training_type: TrainingType;
+  hours: number;
+  training_date: string;
+  instructor_name: string | null;
+  location: string | null;
+  passed: boolean;
+  notes: string | null;
+  attachments: TrainingAttachment[];
+  created_at: string;
+}
+
+export interface Certification {
+  id: string;
+  department_id: string;
+  user_id: string;
+  name: string;
+  issuing_authority: string | null;
+  certification_number: string | null;
+  issued_date: string;
+  expiration_date: string | null;
+  status: CertificationStatus;
+  document_url: string | null;
+  created_at: string;
+}
+
+export interface TrainingEvent {
+  id: string;
+  department_id: string;
+  title: string;
+  description: string | null;
+  event_type: EventType;
+  location: string | null;
+  start_time: string;
+  end_time: string;
+  instructor_id: string | null;
+  max_attendees: number | null;
+  is_mandatory: boolean;
+  course_id: string | null;
+  created_at: string;
+}
+
+export interface TrainingEventAttendance {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: AttendanceStatus;
+  check_in_time: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+// ============================================================================
+// CALENDAR / SCHEDULING TABLES
+// ============================================================================
+
+export interface DepartmentEvent {
+  id: string;
+  department_id: string;
+  title: string;
+  description: string | null;
+  event_type: DepartmentEventType;
+  location: string | null;
+  start_time: string;
+  end_time: string | null;
+  all_day: boolean;
+  recurring: EventRecurring;
+  recurring_until: string | null;
+  created_by_user_id: string;
+  is_mandatory: boolean;
+  notify_members: boolean;
+  created_at: string;
+}
+
+export interface EventRsvp {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: RsvpStatus;
+  responded_at: string;
+}
+
+// ============================================================================
+// ANNOUNCEMENTS & MESSAGING TABLES
+// ============================================================================
+
+export interface Announcement {
+  id: string;
+  department_id: string;
+  title: string;
+  body: string;
+  priority: AnnouncementPriority;
+  posted_by_user_id: string;
+  target_roles: UserRole[] | null;
+  expires_at: string | null;
+  is_pinned: boolean;
+  read_by: string[];
+  created_at: string;
+}
+
+export interface GroupMessage {
+  id: string;
+  department_id: string;
+  sender_user_id: string;
+  subject: string | null;
+  body: string;
+  target_type: MessageTargetType;
+  target_roles: UserRole[] | null;
+  target_station_ids: string[] | null;
+  target_user_ids: string[] | null;
+  sent_at: string;
+  created_at: string;
+}
+
+export interface MessageRead {
+  id: string;
+  message_id: string;
+  user_id: string;
+  read_at: string;
 }
 
 // ============================================================================
@@ -373,6 +671,94 @@ export interface UserWithStation extends User {
 
 export interface EquipmentWithCategory extends Equipment {
   category?: Pick<EquipmentCategory, 'id' | 'name'>;
+}
+
+export interface ApparatusMaintenanceWithApparatus extends ApparatusMaintenance {
+  apparatus: Pick<Apparatus, 'id' | 'name' | 'unit_number' | 'apparatus_type'>;
+}
+
+export interface ApparatusCheckWithDetails extends ApparatusCheck {
+  apparatus: Pick<Apparatus, 'id' | 'name' | 'unit_number' | 'apparatus_type'>;
+  performed_by: Pick<User, 'id' | 'first_name' | 'last_name'>;
+}
+
+export interface ApparatusIssueWithDetails extends ApparatusIssue {
+  apparatus: Pick<Apparatus, 'id' | 'name' | 'unit_number' | 'apparatus_type'>;
+  reported_by: Pick<User, 'id' | 'first_name' | 'last_name'>;
+  resolved_by?: Pick<User, 'id' | 'first_name' | 'last_name'>;
+}
+
+// Training Management Joined Types
+export interface TrainingRecordWithDetails extends TrainingRecord {
+  user: Pick<User, 'id' | 'first_name' | 'last_name' | 'badge_number'>;
+  course?: Pick<TrainingCourse, 'id' | 'name' | 'category'>;
+}
+
+export interface CertificationWithUser extends Certification {
+  user: Pick<User, 'id' | 'first_name' | 'last_name' | 'badge_number' | 'role'>;
+}
+
+export interface TrainingEventWithDetails extends TrainingEvent {
+  instructor?: Pick<User, 'id' | 'first_name' | 'last_name'>;
+  course?: Pick<TrainingCourse, 'id' | 'name' | 'category'>;
+  attendance_count?: number;
+}
+
+export interface TrainingEventAttendanceWithUser extends TrainingEventAttendance {
+  user: Pick<User, 'id' | 'first_name' | 'last_name' | 'badge_number' | 'role'>;
+}
+
+export interface MemberTrainingSummary {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  total_training_hours: number;
+  hours_by_category: Record<TrainingCategory, number>;
+  hours_by_type: Record<TrainingType, number>;
+  certifications_count: number;
+  active_certifications: number;
+  expiring_certifications: number;
+  expired_certifications: number;
+}
+
+export interface ExpiringCertification {
+  certification_id: string;
+  user_id: string;
+  user_name: string;
+  certification_name: string;
+  expiration_date: string;
+  days_until_expiration: number;
+}
+
+// Calendar/Scheduling Joined Types
+export interface DepartmentEventWithDetails extends DepartmentEvent {
+  created_by: Pick<User, 'id' | 'first_name' | 'last_name'>;
+  rsvp_counts?: {
+    yes: number;
+    no: number;
+    maybe: number;
+  };
+  user_rsvp?: RsvpStatus | null;
+}
+
+export interface EventRsvpWithUser extends EventRsvp {
+  user: Pick<User, 'id' | 'first_name' | 'last_name' | 'role'>;
+}
+
+// Messaging Joined Types
+export interface AnnouncementWithAuthor extends Announcement {
+  posted_by: Pick<User, 'id' | 'first_name' | 'last_name' | 'role'>;
+  is_read?: boolean;
+}
+
+export interface GroupMessageWithDetails extends GroupMessage {
+  sender: Pick<User, 'id' | 'first_name' | 'last_name' | 'role'>;
+  read_count?: number;
+  is_read?: boolean;
+}
+
+export interface MessageReadWithUser extends MessageRead {
+  user: Pick<User, 'id' | 'first_name' | 'last_name'>;
 }
 
 // ============================================================================

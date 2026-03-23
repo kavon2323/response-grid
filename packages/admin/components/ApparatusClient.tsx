@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Truck, Wrench, CheckCircle, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
+import { Search, Plus, Truck, Wrench, CheckCircle, AlertTriangle, ChevronRight } from 'lucide-react';
 import { AddApparatusModal } from './modals/AddApparatusModal';
 
 const typeIcons: Record<string, string> = {
@@ -83,7 +84,11 @@ export function ApparatusClient({ apparatus, stations, departmentId }: Apparatus
           </div>
         ) : (
           apparatus.map((unit) => (
-            <div key={unit.id} className={`bg-white rounded-lg shadow overflow-hidden border-l-4 ${unit.status === 'available' ? 'border-green-500' : unit.status === 'out_of_service' ? 'border-gray-400' : 'border-red-500'}`}>
+            <Link
+              key={unit.id}
+              href={`/apparatus/${unit.id}`}
+              className={`bg-white rounded-lg shadow overflow-hidden border-l-4 hover:shadow-md transition-shadow ${unit.status === 'available' ? 'border-green-500' : unit.status === 'out_of_service' ? 'border-gray-400' : 'border-red-500'}`}
+            >
               <div className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -102,8 +107,12 @@ export function ApparatusClient({ apparatus, stations, departmentId }: Apparatus
                   <div className="flex justify-between"><span className="text-gray-500">Station</span><span>{unit.station?.name || '--'}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Seats</span><span>{unit.seat_capacity}</span></div>
                 </div>
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-sm text-fire-600">
+                  <span>View Details</span>
+                  <ChevronRight className="h-4 w-4" />
+                </div>
               </div>
-            </div>
+            </Link>
           ))
         )}
       </div>
