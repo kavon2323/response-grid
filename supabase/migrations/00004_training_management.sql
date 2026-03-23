@@ -206,7 +206,8 @@ CREATE TABLE training_events (
 CREATE INDEX idx_training_events_department ON training_events(department_id);
 CREATE INDEX idx_training_events_start ON training_events(department_id, start_time);
 CREATE INDEX idx_training_events_type ON training_events(department_id, event_type);
-CREATE INDEX idx_training_events_upcoming ON training_events(department_id, start_time) WHERE start_time > NOW();
+-- Note: Can't use NOW() in partial index, use regular index instead
+CREATE INDEX idx_training_events_start_desc ON training_events(department_id, start_time DESC);
 CREATE INDEX idx_training_events_instructor ON training_events(instructor_id) WHERE instructor_id IS NOT NULL;
 CREATE INDEX idx_training_events_course ON training_events(course_id) WHERE course_id IS NOT NULL;
 
