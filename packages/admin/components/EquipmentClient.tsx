@@ -26,6 +26,10 @@ interface EquipmentClientProps {
 export function EquipmentClient({ equipment, categories, stations, apparatus, departmentId }: EquipmentClientProps) {
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [stationFilter, setStationFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const router = useRouter();
 
   const today = new Date();
@@ -37,6 +41,23 @@ export function EquipmentClient({ equipment, categories, stations, apparatus, de
     const daysUntil = differenceInDays(new Date(e.next_inspection_due), today);
     return daysUntil >= 0 && daysUntil <= 30;
   }).length || 0;
+
+  // Apply filters
+  const filteredEquipment = equipment?.filter((item) => {
+    const matchesSearch = searchQuery === '' ||
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.serial_number?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCategory = categoryFilter === '' || item.category_id === categoryFilter;
+
+    const matchesStation = stationFilter === '' ||
+      item.station_id === stationFilter ||
+      (stationFilter === 'apparatus' && item.apparatus_id);
+
+    const matchesStatus = statusFilter === '' || item.status === statusFilter;
+
+    return matchesSearch && matchesCategory && matchesStation && matchesStatus;
+  }) || [];
 
   return (
     <div className="space-y-6">
@@ -89,6 +110,62 @@ export function EquipmentClient({ equipment, categories, stations, apparatus, de
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search equipment..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <select
+            value={stationFilter}
+            onChange={(e) => setStationFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500"
+          >
+            <option value="">All Locations</option>
+            <option value="apparatus">On Apparatus</option>
+            {stations.map((station) => (
+              <option key={station.id} value={station.id}>{station.name}</option>
+            ))}
+          </select>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500"
+          >
+            <option value="">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500"
+          >
+            <option value="">All Statuses</option>
+            <option value="available">Available</option>
+            <option value="in_use">In Use</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="expired">Expired</option>
+            <option value="retired">Retired</option>
+          </select>
+        </div>
+        {(searchQuery || categoryFilter || stationFilter || statusFilter) && (
+          <div className="mt-3 text-sm text-gray-500">
+            Showing {filteredEquipment.length} of {equipment?.length || 0} items
+          </div>
+        )}
+      </div>
+
       {/* Equipment Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
@@ -102,10 +179,10 @@ export function EquipmentClient({ equipment, categories, stations, apparatus, de
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {(!equipment || equipment.length === 0) ? (
-              <tr><td colSpan={5} className="px-6 py-12 text-center"><Package className="h-12 w-12 mx-auto text-gray-300 mb-4" /><p className="text-gray-500">No equipment found</p></td></tr>
+            {filteredEquipment.length === 0 ? (
+              <tr><td colSpan={5} className="px-6 py-12 text-center"><Package className="h-12 w-12 mx-auto text-gray-300 mb-4" /><p className="text-gray-500">{equipment?.length === 0 ? 'No equipment found' : 'No equipment matches your filters'}</p></td></tr>
             ) : (
-              equipment.map((item) => {
+              filteredEquipment.map((item) => {
                 const daysUntilInspection = item.next_inspection_due ? differenceInDays(new Date(item.next_inspection_due), today) : null;
                 return (
                   <tr key={item.id} className="hover:bg-gray-50">

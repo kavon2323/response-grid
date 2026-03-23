@@ -5,14 +5,14 @@
 -- ENUMS
 -- ============================================================================
 
-CREATE TYPE event_type AS ENUM (
-  'meeting',
-  'training',
-  'drill',
-  'maintenance',
-  'social',
-  'other'
-);
+-- Note: event_type already exists from 00004_training_management.sql
+-- Add 'social' value if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'social' AND enumtypid = 'event_type'::regtype) THEN
+    ALTER TYPE event_type ADD VALUE 'social';
+  END IF;
+END $$;
 
 CREATE TYPE event_recurring AS ENUM (
   'none',

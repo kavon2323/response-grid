@@ -13,6 +13,7 @@ import {
   Map,
   Calendar,
   Megaphone,
+  Building2,
 } from 'lucide-react';
 
 const navigation = [
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Apparatus', href: '/apparatus', icon: Truck },
   { name: 'Equipment', href: '/equipment', icon: Package },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Department', href: '/department', icon: Building2 },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 

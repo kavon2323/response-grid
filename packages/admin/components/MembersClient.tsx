@@ -21,10 +21,29 @@ interface MembersClientProps {
 
 export function MembersClient({ members, stations, departmentId }: MembersClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [stationFilter, setStationFilter] = useState('');
   const router = useRouter();
 
   const activeCount = members?.filter((m) => m.is_active).length || 0;
   const inactiveCount = members?.filter((m) => !m.is_active).length || 0;
+
+  // Apply filters
+  const filteredMembers = members?.filter((member) => {
+    const matchesSearch = searchQuery === '' ||
+      `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.badge_number?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesRole = roleFilter === '' || member.role === roleFilter;
+
+    const matchesStation = stationFilter === '' ||
+      (stationFilter === 'unassigned' && !member.primary_station_id) ||
+      member.primary_station_id === stationFilter;
+
+    return matchesSearch && matchesRole && matchesStation;
+  }) || [];
 
   return (
     <div className="space-y-6">
@@ -85,10 +104,31 @@ export function MembersClient({ members, stations, departmentId }: MembersClient
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input type="text" placeholder="Search members..." className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500 focus:border-transparent" />
+              <input
+                type="text"
+                placeholder="Search members..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500 focus:border-transparent"
+              />
             </div>
           </div>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500">
+          <select
+            value={stationFilter}
+            onChange={(e) => setStationFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500"
+          >
+            <option value="">All Stations</option>
+            <option value="unassigned">Unassigned</option>
+            {stations.map((station) => (
+              <option key={station.id} value={station.id}>{station.name}</option>
+            ))}
+          </select>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500"
+          >
             <option value="">All Roles</option>
             <option value="volunteer">Volunteer</option>
             <option value="lieutenant">Lieutenant</option>
@@ -97,17 +137,24 @@ export function MembersClient({ members, stations, departmentId }: MembersClient
             <option value="admin">Admin</option>
           </select>
         </div>
+        {(searchQuery || roleFilter || stationFilter) && (
+          <div className="mt-3 text-sm text-gray-500">
+            Showing {filteredMembers.length} of {members?.length || 0} members
+          </div>
+        )}
       </div>
 
       {/* Members Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(!members || members.length === 0) ? (
+        {filteredMembers.length === 0 ? (
           <div className="col-span-full bg-white rounded-lg shadow p-12 text-center">
             <Shield className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No members found</p>
+            <p className="text-gray-500">
+              {members?.length === 0 ? 'No members found' : 'No members match your filters'}
+            </p>
           </div>
         ) : (
-          members.map((member) => (
+          filteredMembers.map((member) => (
             <div key={member.id} className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-fire-100 flex items-center justify-center flex-shrink-0">

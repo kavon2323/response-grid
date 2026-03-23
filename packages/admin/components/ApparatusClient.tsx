@@ -28,11 +28,28 @@ interface ApparatusClientProps {
 
 export function ApparatusClient({ apparatus, stations, departmentId }: ApparatusClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [stationFilter, setStationFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const router = useRouter();
 
   const availableCount = apparatus?.filter((a) => a.status === 'available').length || 0;
   const dispatchedCount = apparatus?.filter((a) => ['dispatched', 'en_route', 'on_scene'].includes(a.status)).length || 0;
   const outOfServiceCount = apparatus?.filter((a) => a.status === 'out_of_service').length || 0;
+
+  // Apply filters
+  const filteredApparatus = apparatus?.filter((unit) => {
+    const matchesSearch = searchQuery === '' ||
+      unit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      unit.unit_number.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStation = stationFilter === '' || unit.station_id === stationFilter;
+    const matchesType = typeFilter === '' || unit.apparatus_type === typeFilter;
+    const matchesStatus = statusFilter === '' || unit.status === statusFilter;
+
+    return matchesSearch && matchesStation && matchesType && matchesStatus;
+  }) || [];
 
   return (
     <div className="space-y-6">
@@ -75,15 +92,76 @@ export function ApparatusClient({ apparatus, stations, departmentId }: Apparatus
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search apparatus..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <select
+            value={stationFilter}
+            onChange={(e) => setStationFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500"
+          >
+            <option value="">All Stations</option>
+            {stations.map((station) => (
+              <option key={station.id} value={station.id}>{station.name}</option>
+            ))}
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500"
+          >
+            <option value="">All Types</option>
+            <option value="engine">Engine</option>
+            <option value="ladder">Ladder</option>
+            <option value="rescue">Rescue</option>
+            <option value="tanker">Tanker</option>
+            <option value="ambulance">Ambulance</option>
+            <option value="brush">Brush</option>
+            <option value="utility">Utility</option>
+            <option value="command">Command</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fire-500"
+          >
+            <option value="">All Statuses</option>
+            <option value="available">Available</option>
+            <option value="dispatched">Dispatched</option>
+            <option value="en_route">En Route</option>
+            <option value="on_scene">On Scene</option>
+            <option value="returning">Returning</option>
+            <option value="out_of_service">Out of Service</option>
+          </select>
+        </div>
+        {(searchQuery || stationFilter || typeFilter || statusFilter) && (
+          <div className="mt-3 text-sm text-gray-500">
+            Showing {filteredApparatus.length} of {apparatus?.length || 0} units
+          </div>
+        )}
+      </div>
+
       {/* Apparatus Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(!apparatus || apparatus.length === 0) ? (
+        {filteredApparatus.length === 0 ? (
           <div className="col-span-full bg-white rounded-lg shadow p-12 text-center">
             <Truck className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No apparatus found</p>
+            <p className="text-gray-500">{apparatus?.length === 0 ? 'No apparatus found' : 'No apparatus matches your filters'}</p>
           </div>
         ) : (
-          apparatus.map((unit) => (
+          filteredApparatus.map((unit) => (
             <Link
               key={unit.id}
               href={`/apparatus/${unit.id}`}
