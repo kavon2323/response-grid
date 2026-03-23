@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Building2,
   Bell,
@@ -10,7 +10,9 @@ import {
   Palette,
   Save,
 } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { CADSourcesManager } from '@/components/CADSourcesManager';
 
 const settingsSections = [
   { id: 'department', name: 'Department', icon: Building2 },
@@ -24,6 +26,24 @@ const settingsSections = [
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('department');
   const [hasChanges, setHasChanges] = useState(false);
+  const [departmentId, setDepartmentId] = useState<string | null>(null);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    async function loadDepartment() {
+      const { data } = await supabase
+        .from('departments')
+        .select('id')
+        .limit(1)
+        .single();
+      if (data) setDepartmentId(data.id);
+    }
+    loadDepartment();
+  }, []);
 
   // Warn before leaving with unsaved changes
   useUnsavedChanges(hasChanges);
@@ -237,42 +257,12 @@ export default function SettingsPage() {
           )}
 
           {activeSection === 'integrations' && (
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  CAD Integrations
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Connect your dispatch system to automatically receive incidents
-                </p>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <Webhook className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="font-medium text-gray-900 mb-2">
-                    No CAD Sources Configured
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Connect your CAD system via webhook, email parsing, or API polling
-                  </p>
-                  <button className="px-4 py-2 bg-fire-600 text-white rounded-lg hover:bg-fire-700">
-                    Add CAD Source
-                  </button>
-                </div>
-
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">
-                    Supported Integrations
-                  </h4>
-                  <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• Webhook (POST endpoint for CAD systems)</li>
-                    <li>• Email Parsing (Forward dispatch emails)</li>
-                    <li>• Active911 API</li>
-                    <li>• IamResponding API</li>
-                    <li>• Custom API Polling</li>
-                  </ul>
-                </div>
-              </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              {departmentId ? (
+                <CADSourcesManager departmentId={departmentId} />
+              ) : (
+                <div className="text-center py-8 text-gray-500">Loading...</div>
+              )}
             </div>
           )}
 
