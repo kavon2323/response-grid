@@ -120,7 +120,7 @@ export function TestIncidentModal({ isOpen, onClose, onSuccess, departmentId }: 
       address: formData.address,
       city: formData.city,
       cross_street: formData.cross_street || null,
-      notes: formData.notes || null,
+      dispatch_notes: formData.notes || null,
       dispatched_at: new Date().toISOString(),
     });
 
