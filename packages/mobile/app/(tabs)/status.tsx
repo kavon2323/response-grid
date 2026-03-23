@@ -9,22 +9,45 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Switch,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores/auth-store';
 import { useIncidentStore } from '@/stores/incident-store';
 import { LocationService } from '@/services/location-service';
+import { supabase } from '@/lib/supabase';
 import { USER_ROLE_CONFIG, RESPONSE_STATUS_CONFIG } from '@fireresponse/shared';
 
 export default function StatusTab() {
-  const { profile } = useAuthStore();
+  const { profile, setProfile } = useAuthStore();
   const { activeIncident, myResponse } = useIncidentStore();
   const [isTracking, setIsTracking] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     LocationService.isTracking().then(setIsTracking);
   }, [myResponse?.status]);
+
+  const handleAvailabilityToggle = async (value: boolean) => {
+    if (!profile) return;
+
+    setIsUpdating(true);
+
+    const { error } = await supabase
+      .from('users')
+      .update({ is_active: value })
+      .eq('id', profile.id);
+
+    if (error) {
+      Alert.alert('Error', 'Failed to update status');
+    } else {
+      setProfile({ ...profile, is_active: value });
+    }
+
+    setIsUpdating(false);
+  };
 
   if (!profile) {
     return null;
@@ -38,6 +61,34 @@ export default function StatusTab() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Availability Toggle */}
+      <View style={[styles.availabilityCard, profile.is_active ? styles.availabilityActive : styles.availabilityInactive]}>
+        <View style={styles.availabilityInfo}>
+          <View style={styles.availabilityHeader}>
+            <Ionicons
+              name={profile.is_active ? 'radio-button-on' : 'radio-button-off'}
+              size={24}
+              color={profile.is_active ? '#059669' : '#9CA3AF'}
+            />
+            <Text style={[styles.availabilityTitle, profile.is_active ? styles.availabilityTitleActive : styles.availabilityTitleInactive]}>
+              {profile.is_active ? 'Available for Calls' : 'Unavailable'}
+            </Text>
+          </View>
+          <Text style={styles.availabilityDescription}>
+            {profile.is_active
+              ? 'You will receive notifications for new incidents'
+              : 'You will NOT receive call notifications'}
+          </Text>
+        </View>
+        <Switch
+          value={profile.is_active}
+          onValueChange={handleAvailabilityToggle}
+          disabled={isUpdating}
+          trackColor={{ false: '#D1D5DB', true: '#A7F3D0' }}
+          thumbColor={profile.is_active ? '#059669' : '#9CA3AF'}
+        />
+      </View>
+
       {/* Profile Card */}
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
@@ -196,6 +247,48 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 32,
+  },
+  availabilityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+  },
+  availabilityActive: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#059669',
+  },
+  availabilityInactive: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#DC2626',
+  },
+  availabilityInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  availabilityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  availabilityTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  availabilityTitleActive: {
+    color: '#059669',
+  },
+  availabilityTitleInactive: {
+    color: '#DC2626',
+  },
+  availabilityDescription: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 4,
+    marginLeft: 32,
   },
   profileCard: {
     flexDirection: 'row',

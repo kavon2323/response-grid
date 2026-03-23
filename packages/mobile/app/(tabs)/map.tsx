@@ -1,6 +1,6 @@
 /**
  * Map Tab - Live view of responders and incidents
- * Available to command-level users
+ * Available to all responders for situational awareness
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -14,11 +14,10 @@ import {
 import MapView, { Marker, PROVIDER_DEFAULT, Callout } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useAuthStore } from '@/stores/auth-store';
 import { useIncidentStore } from '@/stores/incident-store';
 import { supabase } from '@/lib/supabase';
-import { RESPONSE_STATUS_CONFIG, USER_ROLE_CONFIG } from '@fireresponse/shared';
-import type { ResponderLocation, IncidentResponseWithUser, Incident } from '@fireresponse/shared';
+import { RESPONSE_STATUS_CONFIG } from '@fireresponse/shared';
+import type { ResponderLocation, Incident } from '@fireresponse/shared';
 
 interface ResponderMarker {
   userId: string;
@@ -31,7 +30,6 @@ interface ResponderMarker {
 }
 
 export default function MapTab() {
-  const { isCommandLevel, profile } = useAuthStore();
   const { activeIncident, allResponses } = useIncidentStore();
   const mapRef = useRef<MapView>(null);
 
@@ -57,9 +55,9 @@ export default function MapTab() {
     fetchActiveIncidents();
   }, []);
 
-  // Subscribe to location updates for active incident
+  // Subscribe to location updates for active incident - all responders can see
   useEffect(() => {
-    if (!activeIncident || !isCommandLevel) return;
+    if (!activeIncident) return;
 
     const channel = supabase
       .channel(`locations:${activeIncident.id}`)
@@ -103,23 +101,7 @@ export default function MapTab() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeIncident, allResponses, isCommandLevel]);
-
-  // Non-command users see limited map
-  if (!isCommandLevel) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.restrictedContainer}>
-          <Ionicons name="lock-closed" size={48} color="#9CA3AF" />
-          <Text style={styles.restrictedTitle}>Command Access Required</Text>
-          <Text style={styles.restrictedText}>
-            Live responder tracking is available to command-level users
-            (Lieutenant and above).
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  }, [activeIncident, allResponses]);
 
   if (isLoading) {
     return (
@@ -262,24 +244,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  restrictedContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  restrictedTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
-    marginTop: 16,
-  },
-  restrictedText: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginTop: 8,
   },
   map: {
     flex: 1,

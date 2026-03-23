@@ -25,6 +25,7 @@ interface AuthState {
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   updatePushToken: (token: string) => Promise<void>;
+  setProfile: (profile: User) => void;
 }
 
 const COMMAND_ROLES: UserRole[] = ['lieutenant', 'captain', 'chief', 'admin'];
@@ -148,6 +149,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     set({
       profile: { ...profile, push_token: token },
+    });
+  },
+
+  setProfile: (profile: User) => {
+    set({
+      profile,
+      isCommandLevel: COMMAND_ROLES.includes(profile.role),
     });
   },
 }));
