@@ -8,10 +8,9 @@ import {
   Users,
   Webhook,
   Palette,
-  Database,
-  Mail,
   Save,
 } from 'lucide-react';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 const settingsSections = [
   { id: 'department', name: 'Department', icon: Building2 },
@@ -25,6 +24,9 @@ const settingsSections = [
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('department');
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Warn before leaving with unsaved changes
+  useUnsavedChanges(hasChanges);
 
   return (
     <div className="space-y-6">

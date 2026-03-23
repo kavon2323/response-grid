@@ -16,6 +16,7 @@ import {
 import { createBrowserClient } from '@supabase/ssr';
 import { AddStationModal } from './modals/AddStationModal';
 import { EditStationModal } from './modals/EditStationModal';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 interface Department {
   id: string;
@@ -72,6 +73,9 @@ export function DepartmentClient({ department, stations, stationStats }: Departm
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+
+  // Warn before leaving with unsaved changes
+  useUnsavedChanges(hasChanges);
 
   function handleInputChange(field: string, value: string) {
     setDeptForm(prev => ({ ...prev, [field]: value }));
