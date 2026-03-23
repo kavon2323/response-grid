@@ -9,9 +9,10 @@ interface AddAnnouncementModalProps {
   onClose: () => void;
   onSuccess: () => void;
   departmentId: string;
+  userId: string;
 }
 
-export function AddAnnouncementModal({ isOpen, onClose, onSuccess, departmentId }: AddAnnouncementModalProps) {
+export function AddAnnouncementModal({ isOpen, onClose, onSuccess, departmentId, userId }: AddAnnouncementModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,11 +33,12 @@ export function AddAnnouncementModal({ isOpen, onClose, onSuccess, departmentId 
 
     const { error: insertError } = await supabase.from('announcements').insert({
       title: formData.get('title'),
-      content: formData.get('content'),
+      body: formData.get('content'),
       priority: formData.get('priority'),
       is_pinned: formData.get('is_pinned') === 'on',
       expires_at: expiresAt,
       department_id: departmentId,
+      posted_by_user_id: userId,
     });
 
     if (insertError) {

@@ -49,7 +49,7 @@ const priorityOptions = [
 interface Announcement {
   id: string;
   title: string;
-  content: string;
+  body: string;
   priority: string;
   is_pinned: boolean;
   created_at: string;
@@ -64,9 +64,10 @@ interface Announcement {
 interface AnnouncementsClientProps {
   announcements: Announcement[];
   departmentId: string;
+  defaultUserId: string;
 }
 
-export function AnnouncementsClient({ announcements, departmentId }: AnnouncementsClientProps) {
+export function AnnouncementsClient({ announcements, departmentId, defaultUserId }: AnnouncementsClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterPriority, setFilterPriority] = useState('');
   const router = useRouter();
@@ -196,7 +197,7 @@ export function AnnouncementsClient({ announcements, departmentId }: Announcemen
                       </span>
                     </div>
                     <p className="mt-2 text-gray-600 whitespace-pre-wrap">
-                      {announcement.content}
+                      {announcement.body}
                     </p>
                     <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
@@ -231,6 +232,7 @@ export function AnnouncementsClient({ announcements, departmentId }: Announcemen
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => router.refresh()}
         departmentId={departmentId}
+        userId={defaultUserId}
       />
     </div>
   );

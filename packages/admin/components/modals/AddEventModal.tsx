@@ -9,9 +9,10 @@ interface AddEventModalProps {
   onClose: () => void;
   onSuccess: () => void;
   departmentId: string;
+  userId: string;
 }
 
-export function AddEventModal({ isOpen, onClose, onSuccess, departmentId }: AddEventModalProps) {
+export function AddEventModal({ isOpen, onClose, onSuccess, departmentId, userId }: AddEventModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ export function AddEventModal({ isOpen, onClose, onSuccess, departmentId }: AddE
       ? new Date(`${endDate}T${endTime}`).toISOString()
       : null;
 
-    const { error: insertError } = await supabase.from('events').insert({
+    const { error: insertError } = await supabase.from('department_events').insert({
       title: formData.get('title'),
       description: formData.get('description') || null,
       event_type: formData.get('event_type'),
@@ -45,6 +46,7 @@ export function AddEventModal({ isOpen, onClose, onSuccess, departmentId }: AddE
       end_time: endDateTime,
       location: formData.get('location') || null,
       department_id: departmentId,
+      created_by_user_id: userId,
     });
 
     if (insertError) {

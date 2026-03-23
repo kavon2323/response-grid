@@ -20,17 +20,17 @@ export async function RecentActivityFeed() {
     .order('dispatched_at', { ascending: false })
     .limit(5);
 
-  // Fetch recent status changes
+  // Fetch recent responder status updates
   const { data: recentResponses } = await supabase
-    .from('response_status_log')
+    .from('incident_responses')
     .select(`
       id,
-      new_status,
-      changed_at,
+      status,
+      updated_at,
       user:users(first_name, last_name),
       incident:incidents(incident_type)
     `)
-    .order('changed_at', { ascending: false })
+    .order('updated_at', { ascending: false })
     .limit(10);
 
   // Combine and sort activities
@@ -46,18 +46,16 @@ export async function RecentActivityFeed() {
     });
   });
 
-  recentResponses?.forEach((response) => {
-    activities.push({
-      id: `response-${response.id}`,
-      type: 'response',
-      // @ts-ignore
-      title: `${response.user?.first_name} ${response.user?.last_name}`,
-      description: `${response.new_status.replace(/_/g, ' ')} - ${
-        // @ts-ignore
-        response.incident?.incident_type
-      }`,
-      timestamp: response.changed_at,
-    });
+  recentResponses?.forEach((response: any) => {
+    if (response.user && response.incident) {
+      activities.push({
+        id: `response-${response.id}`,
+        type: 'response',
+        title: `${response.user?.first_name} ${response.user?.last_name}`,
+        description: `${response.status?.replace(/_/g, ' ')} - ${response.incident?.incident_type}`,
+        timestamp: response.updated_at,
+      });
+    }
   });
 
   // Sort by timestamp

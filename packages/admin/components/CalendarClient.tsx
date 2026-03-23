@@ -46,9 +46,10 @@ interface CalendarEvent {
 interface CalendarClientProps {
   events: CalendarEvent[];
   departmentId: string;
+  defaultUserId: string;
 }
 
-export function CalendarClient({ events, departmentId }: CalendarClientProps) {
+export function CalendarClient({ events, departmentId, defaultUserId }: CalendarClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [filterType, setFilterType] = useState('');
@@ -312,6 +313,7 @@ export function CalendarClient({ events, departmentId }: CalendarClientProps) {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => router.refresh()}
         departmentId={departmentId}
+        userId={defaultUserId}
       />
     </div>
   );
