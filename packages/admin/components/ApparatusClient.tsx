@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Plus, Truck, Wrench, CheckCircle, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Search, Plus, Truck, Wrench, CheckCircle, AlertTriangle, ChevronRight, Pencil, Trash2 } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
 import { AddApparatusModal } from './modals/AddApparatusModal';
+import { EditApparatusModal } from './modals/EditApparatusModal';
 
 const typeIcons: Record<string, string> = {
   engine: '🚒', ladder: '🪜', rescue: '🚑', tanker: '💧', ambulance: '🏥',
@@ -28,11 +30,29 @@ interface ApparatusClientProps {
 
 export function ApparatusClient({ apparatus, stations, departmentId }: ApparatusClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingApparatus, setEditingApparatus] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [stationFilter, setStationFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const router = useRouter();
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  async function deleteApparatus(apparatusId: string, apparatusName: string) {
+    if (!confirm(`Are you sure you want to delete "${apparatusName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    const { error } = await supabase.from('apparatus').delete().eq('id', apparatusId);
+
+    if (!error) {
+      router.refresh();
+    }
+  }
 
   const availableCount = apparatus?.filter((a) => a.status === 'available').length || 0;
   const dispatchedCount = apparatus?.filter((a) => ['dispatched', 'en_route', 'on_scene'].includes(a.status)).length || 0;
@@ -162,10 +182,9 @@ export function ApparatusClient({ apparatus, stations, departmentId }: Apparatus
           </div>
         ) : (
           filteredApparatus.map((unit) => (
-            <Link
+            <div
               key={unit.id}
-              href={`/apparatus/${unit.id}`}
-              className={`bg-white rounded-lg shadow overflow-hidden border-l-4 hover:shadow-md transition-shadow ${unit.status === 'available' ? 'border-green-500' : unit.status === 'out_of_service' ? 'border-gray-400' : 'border-red-500'}`}
+              className={`bg-white rounded-lg shadow overflow-hidden border-l-4 ${unit.status === 'available' ? 'border-green-500' : unit.status === 'out_of_service' ? 'border-gray-400' : 'border-red-500'}`}
             >
               <div className="p-4">
                 <div className="flex items-start justify-between">
@@ -176,26 +195,58 @@ export function ApparatusClient({ apparatus, stations, departmentId }: Apparatus
                       <p className="text-sm text-gray-500">Unit #{unit.unit_number}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 text-xs font-medium rounded border ${statusColors[unit.status as keyof typeof statusColors]}`}>
-                    {unit.status.replace(/_/g, ' ')}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 text-xs font-medium rounded border ${statusColors[unit.status as keyof typeof statusColors]}`}>
+                      {unit.status.replace(/_/g, ' ')}
+                    </span>
+                    <button
+                      onClick={() => setEditingApparatus(unit)}
+                      className="p-1.5 text-gray-400 hover:text-fire-600 hover:bg-fire-50 rounded"
+                      title="Edit"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteApparatus(unit.id, unit.name)}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="mt-4 space-y-2 text-sm">
                   <div className="flex justify-between"><span className="text-gray-500">Type</span><span className="capitalize">{unit.apparatus_type}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Station</span><span>{unit.station?.name || '--'}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Seats</span><span>{unit.seat_capacity}</span></div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-sm text-fire-600">
+                <Link
+                  href={`/apparatus/${unit.id}`}
+                  className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-sm text-fire-600 hover:text-fire-700"
+                >
                   <span>View Details</span>
                   <ChevronRight className="h-4 w-4" />
-                </div>
+                </Link>
               </div>
-            </Link>
+            </div>
           ))
         )}
       </div>
 
       <AddApparatusModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={() => router.refresh()} stations={stations} departmentId={departmentId} />
+
+      {editingApparatus && (
+        <EditApparatusModal
+          isOpen={true}
+          onClose={() => setEditingApparatus(null)}
+          onSuccess={() => {
+            setEditingApparatus(null);
+            router.refresh();
+          }}
+          apparatus={editingApparatus}
+          stations={stations}
+        />
+      )}
     </div>
   );
 }

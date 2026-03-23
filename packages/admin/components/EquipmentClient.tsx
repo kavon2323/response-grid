@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Package, AlertTriangle, CheckCircle, Wrench, Clock } from 'lucide-react';
+import { Search, Plus, Package, AlertTriangle, CheckCircle, Wrench, Clock, Pencil, Trash2 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
+import { createBrowserClient } from '@supabase/ssr';
 import { AddEquipmentModal } from './modals/AddEquipmentModal';
 import { AddCategoryModal } from './modals/AddCategoryModal';
+import { EditEquipmentModal } from './modals/EditEquipmentModal';
 
 const statusColors = {
   available: 'bg-green-100 text-green-700',
@@ -26,11 +28,29 @@ interface EquipmentClientProps {
 export function EquipmentClient({ equipment, categories, stations, apparatus, departmentId }: EquipmentClientProps) {
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [stationFilter, setStationFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const router = useRouter();
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  async function deleteEquipment(equipmentId: string, equipmentName: string) {
+    if (!confirm(`Are you sure you want to delete "${equipmentName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    const { error } = await supabase.from('equipment').delete().eq('id', equipmentId);
+
+    if (!error) {
+      router.refresh();
+    }
+  }
 
   const today = new Date();
   const availableCount = equipment?.filter((e) => e.status === 'available').length || 0;
@@ -176,11 +196,12 @@ export function EquipmentClient({ equipment, categories, stations, apparatus, de
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Inspection</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredEquipment.length === 0 ? (
-              <tr><td colSpan={5} className="px-6 py-12 text-center"><Package className="h-12 w-12 mx-auto text-gray-300 mb-4" /><p className="text-gray-500">{equipment?.length === 0 ? 'No equipment found' : 'No equipment matches your filters'}</p></td></tr>
+              <tr><td colSpan={6} className="px-6 py-12 text-center"><Package className="h-12 w-12 mx-auto text-gray-300 mb-4" /><p className="text-gray-500">{equipment?.length === 0 ? 'No equipment found' : 'No equipment matches your filters'}</p></td></tr>
             ) : (
               filteredEquipment.map((item) => {
                 const daysUntilInspection = item.next_inspection_due ? differenceInDays(new Date(item.next_inspection_due), today) : null;
@@ -204,6 +225,24 @@ export function EquipmentClient({ equipment, categories, stations, apparatus, de
                         </p>
                       ) : <span className="text-gray-400">--</span>}
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setEditingEquipment(item)}
+                          className="p-1.5 text-gray-400 hover:text-fire-600 hover:bg-fire-50 rounded"
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteEquipment(item.id, item.name)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })
@@ -214,6 +253,21 @@ export function EquipmentClient({ equipment, categories, stations, apparatus, de
 
       <AddEquipmentModal isOpen={isEquipmentModalOpen} onClose={() => setIsEquipmentModalOpen(false)} onSuccess={() => router.refresh()} categories={categories} stations={stations} apparatus={apparatus} departmentId={departmentId} />
       <AddCategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} onSuccess={() => router.refresh()} departmentId={departmentId} />
+
+      {editingEquipment && (
+        <EditEquipmentModal
+          isOpen={true}
+          onClose={() => setEditingEquipment(null)}
+          onSuccess={() => {
+            setEditingEquipment(null);
+            router.refresh();
+          }}
+          equipment={editingEquipment}
+          categories={categories}
+          stations={stations}
+          apparatus={apparatus}
+        />
+      )}
     </div>
   );
 }

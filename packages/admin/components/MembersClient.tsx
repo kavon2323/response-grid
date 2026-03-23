@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Mail, Phone, Shield, UserCheck, UserX } from 'lucide-react';
+import { Search, Plus, Mail, Phone, Shield, UserCheck, UserX, Pencil, Trash2 } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
 import { AddMemberModal } from './modals/AddMemberModal';
+import { EditMemberModal } from './modals/EditMemberModal';
 
 const roleColors = {
   volunteer: 'bg-gray-100 text-gray-700',
@@ -21,10 +23,28 @@ interface MembersClientProps {
 
 export function MembersClient({ members, stations, departmentId }: MembersClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [stationFilter, setStationFilter] = useState('');
   const router = useRouter();
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  async function deleteMember(memberId: string, memberName: string) {
+    if (!confirm(`Are you sure you want to delete ${memberName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    const { error } = await supabase.from('users').delete().eq('id', memberId);
+
+    if (!error) {
+      router.refresh();
+    }
+  }
 
   const activeCount = members?.filter((m) => m.is_active).length || 0;
   const inactiveCount = members?.filter((m) => !m.is_active).length || 0;
@@ -175,6 +195,22 @@ export function MembersClient({ members, stations, departmentId }: MembersClient
                   </div>
                   {member.primary_station && <p className="text-xs text-gray-500 mt-1">{member.primary_station.name}</p>}
                 </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setEditingMember(member)}
+                    className="p-1.5 text-gray-400 hover:text-fire-600 hover:bg-fire-50 rounded"
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteMember(member.id, `${member.first_name} ${member.last_name}`)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4">
                 {member.email && (
@@ -201,6 +237,19 @@ export function MembersClient({ members, stations, departmentId }: MembersClient
         stations={stations}
         departmentId={departmentId}
       />
+
+      {editingMember && (
+        <EditMemberModal
+          isOpen={true}
+          onClose={() => setEditingMember(null)}
+          onSuccess={() => {
+            setEditingMember(null);
+            router.refresh();
+          }}
+          member={editingMember}
+          stations={stations}
+        />
+      )}
     </div>
   );
 }
